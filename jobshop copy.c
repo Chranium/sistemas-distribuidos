@@ -1,10 +1,10 @@
 /* External definitions for job-shop model. */
-// gcc jobshop.c simlib.c -o jobshop -lm
-
+// gcc jobshop.c simlib.c -o jobshop -lm 
 // gcc jobshop.c simlib.c -o jobshop -lm -fopenmp
 
 #include "simlib.h"              /* Required for use of simlib.c. */
 #include <omp.h>
+
 
 #define EVENT_ARRIVAL         1  /* Event type for arrival of a job to the
                                     system. */
@@ -22,6 +22,7 @@
 int   num_stations, num_job_types, i, j, num_machines[MAX_NUM_STATIONS + 1],
       num_tasks[MAX_NUM_JOB_TYPES +1],
       route[MAX_NUM_JOB_TYPES +1][MAX_NUM_STATIONS + 1],
+      *station_sync,
       num_machines_busy[MAX_NUM_STATIONS + 1], *job_type, *task;
 float mean_interarrival, length_simulation,
       prob_distrib_job_type[MAX_NUM_JOB_TYPES + 1], // original prob_distrib_job_type [26]
@@ -37,7 +38,6 @@ void  report(void);
 
 int main(int argc, char **argv)  /* Main function. */
 {
-
    char *fileInput =  "jobshop.input.txt";
    char *fileOutput = "jobshop.output.txt";
 
@@ -102,12 +102,15 @@ int main(int argc, char **argv)  /* Main function. */
             fprintf(outfile, "%9.2f", mean_service[i][j]);
     }
 
-    job_type = (int *) calloc(num_stations + 1, sizeof(int));
-    task = (int *) calloc(num_stations + 1, sizeof(int));
+   station_sync = (int *) calloc(num_stations + 1, sizeof(int));
+   job_type = (int *) calloc(num_stations + 1, sizeof(int));
+   task = (int *) calloc(num_stations + 1, sizeof(int));
+
 
     /* Initialize all machines in all stations to the idle state. */
 
     for (j = 1; j <= num_stations; ++j) {
+      // station_sync[j] = 0;
       task[j] = 0;
       job_type[j] = 0;
       num_machines_busy[j] = 0;
@@ -122,59 +125,70 @@ int main(int argc, char **argv)  /* Main function. */
     maxatr = 4;  /* NEVER SET maxatr TO BE SMALLER THAN 4. */
 
     /* TODO: agregue comentario bonito en ingles */
-    int threads = 3;
+    int threads = 1;
 
-   //  int id_station, id_transfer;
-   //  for (id_station = 1, id_transfer = 1; id_station <= 1; ++id_station, ++id_transfer)
-    #pragma omp parallel num_threads(threads)
-    {
-       
-      int id_station = omp_get_thread_num() + 1;
-      int id_transfer = omp_get_thread_num() + 1;
-        /* Schedule the arrival of the first job. */
+   int id_station, id_transfer;
+   for (id_station = 1, id_transfer = 1; id_station <= 1/*num_stations*/; ++id_station, ++id_transfer)
+   //#pragma omp parallel num_threads(threads)
+   {
+      // int id_station = omp_get_thread_num() + 1;
+      // int id_transfer = id_station;
 
-        event_schedule(id_transfer, id_station, expon(mean_interarrival, STREAM_INTERARRIVAL),
-                    EVENT_ARRIVAL);
-        /* Schedule the end of the simulation.  (This is needed for consistency of
-        units.) */
+      /* Schedule the arrival of the first job. */
 
-        event_schedule(id_transfer, id_station, 8 * length_simulation, EVENT_END_SIMULATION);
+      printf("id station: %d \n", id_station);
+      printf("ok1, station:%d \n", id_station);
+      event_schedule(id_transfer, id_station, expon(mean_interarrival, STREAM_INTERARRIVAL),
+                  EVENT_ARRIVAL);
+      
+      printf("ok2, station:%d \n", id_station);
+      /* Schedule the end of the simulation.  (This is needed for consistency of
+      units.) */
 
-            /* Run the simulation until it terminates after an end-simulation event
-       (type EVENT_END_SIMULATION) occurs. */
+      event_schedule(id_transfer, id_station, 8 * length_simulation, EVENT_END_SIMULATION);
+
+      /* Run the simulation until it terminates after an end-simulation event
+      (type EVENT_END_SIMULATION) occurs. */
+
+      /* TODO: COMENTARIO */
+      do {
+         /* Determine the next event. */
+
+         // for (i = 1; i <= num_stations; ++i) {
+         //    if (station_sync[id_station] ) {}
+         // }
+
+         printf("before timing, station:%d \n", id_station);
+         timing(id_transfer, id_station);
+         printf("after timing, station:%d \n", id_station);
+
+         /* Invoke the appropriate event function. */
+
+         switch (next_event_type[id_station]) {
+            case EVENT_ARRIVAL:
+               arrive(1, id_station);
+               break;
+            case EVENT_DEPARTURE:
+               depart(id_station);
+               break;
+            case EVENT_END_SIMULATION:
+               // report();
+               break;
+         }
+
+         /* If the event just executed was not the end-simulation event (type
+         EVENT_END_SIMULATION), continue simulating.  Otherwise, end the
+         simulation. */
+
+      } while (next_event_type[id_station] != EVENT_END_SIMULATION);
+
+      // #pragma omp barrier
+   }
    
-        do {
-
-            /* Determine the next event. */
-
-            timing(id_transfer, id_station);
-
-            /* Invoke the appropriate event function. */
-
-            switch (next_event_type[id_station]) {
-                case EVENT_ARRIVAL:
-                    arrive(1, id_station);
-                    break;
-                case EVENT_DEPARTURE:
-                    depart(id_station);
-                    break;
-                case EVENT_END_SIMULATION:
-                    // report();
-                    break;
-            }
-
-        /* If the event just executed was not the end-simulation event (type
-        EVENT_END_SIMULATION), continue simulating.  Otherwise, end the
-        simulation. */
-
-        } while (next_event_type[id_station] != EVENT_END_SIMULATION);
-        #pragma omp barrier
-    }
-
-    report();
-    fclose(infile);
-    fclose(outfile);
-    return 0;
+   report();
+   fclose(infile);
+   fclose(outfile);
+   return 0;
 }
 
 
@@ -191,13 +205,11 @@ void arrive(int new_job, int id_station)  /* Function to serve as both an arriva
 
 
     if (new_job == 1) {
-        job_type[id_station] = random_integer(prob_distrib_job_type, STREAM_JOB_TYPE);
-        task[id_station]     = 1;
-        station = route[job_type[id_station]][task[id_station]];
-        // TODO: problemas con la variable station al reemplazar por id_station
-        event_schedule(id_station, id_station, sim_time[id_station] + expon(mean_interarrival, STREAM_INTERARRIVAL),
-                       EVENT_ARRIVAL);
-        
+      job_type[id_station] = random_integer(prob_distrib_job_type, STREAM_JOB_TYPE);
+      task[id_station]     = 1;
+      station = route[job_type[id_station]][task[id_station]];
+      event_schedule(station, station, sim_time[station] + expon(mean_interarrival, STREAM_INTERARRIVAL),
+                     EVENT_ARRIVAL);
     }
 
     /* Determine the station from the route matrix. */
@@ -215,10 +227,10 @@ void arrive(int new_job, int id_station)  /* Function to serve as both an arriva
              2. Job type.
              3. Current task number. */
 
-        transfer[id_station][1] = sim_time[id_station];
+        transfer[id_station][1] = sim_time[station];
         transfer[id_station][2] = job_type[id_station];
         transfer[id_station][3] = task[id_station];
-        list_file(id_station, LAST, station, sim_time[id_station]);
+        list_file(id_station, LAST, station, sim_time[station]);
     }
 
     else {
@@ -227,9 +239,9 @@ void arrive(int new_job, int id_station)  /* Function to serve as both an arriva
            job (which has a delay of zero). */
 
         sampst(0.0, station);                              /* For station. */
-        sampst(0.0, num_stations + job_type[id_station]);              /* For job type. */
+        sampst(0.0, num_stations + job_type[id_station]);  /* For job type. */
         ++num_machines_busy[station];
-        timest((float) num_machines_busy[station], station, id_station);
+        timest((float) num_machines_busy[station], station);
 
         /* Schedule a service completion.  Note defining attributes beyond the
            first two for the event record before invoking event_schedule. */
@@ -251,9 +263,9 @@ void depart(int id_station)  /* Event function for departure of a job from a par
 
     /* Determine the station from which the job is departing. */
 
-    job_type[id_station] = transfer[id_station][3];
-    task[id_station]     = transfer[id_station][4];
-    station  = route[job_type[id_station]][task[id_station]];
+    job_type[id_station]   = transfer[id_station][3];
+    task[id_station]       = transfer[id_station][4];
+    station                = route[job_type[id_station]][task[id_station]];
 
     /* Check to see whether the queue for this station is empty. */
 
@@ -263,7 +275,7 @@ void depart(int id_station)  /* Event function for departure of a job from a par
            station idle. */
 
         --num_machines_busy[station];
-        timest((float) num_machines_busy[station], station, id_station);
+        timest((float) num_machines_busy[station], station);
     }
 
     else {
@@ -288,16 +300,16 @@ void depart(int id_station)  /* Event function for departure of a job from a par
 
         transfer[id_station][3] = job_type_queue;
         transfer[id_station][4] = task_queue;
-        //   station  = route[job_type_queue][task_queue];
-        // event_schedule(id_station, station, sim_time
-        //                + erlang(2, mean_service[job_type_queue][task_queue],
-        //                         STREAM_SERVICE),
-        //                EVENT_DEPARTURE);
-
-        event_schedule(id_station, id_station, sim_time[id_station]
+        station  = route[job_type_queue][task_queue];
+        event_schedule(id_station, station, sim_time[id_station]
                        + erlang(2, mean_service[job_type_queue][task_queue],
                                 STREAM_SERVICE),
                        EVENT_DEPARTURE);
+
+      //   event_schedule(id_station, id_station, sim_time
+      //                  + erlang(2, mean_service[job_type_queue][task_queue],
+      //                           STREAM_SERVICE),
+      //                  EVENT_DEPARTURE);
     }
 
     /* If the current departing job has one or more tasks yet to be done, send
@@ -340,6 +352,6 @@ void report(void)  /* Report generator function. */
              "\nstation       in queue       utilization        in queue");
     for (j = 1; j <= num_stations; ++j)
         fprintf(outfile, "\n\n%4d%17.3f%17.3f%17.3f", j, filest(j),
-                timest(0.0, -j, 1) / num_machines[j], sampst(0.0, -j));
+                timest(0.0, -j) / num_machines[j], sampst(0.0, -j));
 }
 

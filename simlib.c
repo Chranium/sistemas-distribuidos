@@ -9,8 +9,8 @@
 
 /* Declare simlib global variables. */
 
-int    *list_rank, *list_size, next_event_type, maxatr = 0, maxlist = 0;
-float  *_transfer, **transfer, sim_time, prob_distrib[26];
+int    i, *list_rank, *list_size, *next_event_type, maxatr = 0, maxlist = 0;
+float  *_transfer, **transfer, *sim_time, prob_distrib[26];
 struct master {
     float  *value;
     struct master *pr;
@@ -20,7 +20,7 @@ struct master {
 /* Declare simlib functions. */
 
 void  init_simlib(void);
-void list_file(int id_transfer, int option, int list);
+void list_file(int id_transfer, int option, int list, float _sim_time);
 // void  list_remove(int option, int list);
 void  list_remove(int id_transfer, int option, int list);
 // void  timing(void);
@@ -33,7 +33,7 @@ void event_schedule(int id_transfer, int id_station, float time_of_event, int ty
 // int event_cancel(int id_station, int event_type);
 int event_cancel(int id_transfer, int id_station, int event_type);
 float sampst(float value, int variable);
-float timest(float value, int variable);
+float timest(float value, int variable, int id_station);
 float filest(int list);
 void  out_sampst(FILE *unit, int lowvar, int highvar);
 void  out_timest(FILE *unit, int lowvar, int highvar);
@@ -61,7 +61,6 @@ void init_simlib()
 
     /* Initialize system attributes. */
 
-    sim_time = 0.0;
     if (maxatr < 4) maxatr = MAX_ATTR;
 
     /* Allocate space for the lists. */
@@ -74,10 +73,12 @@ void init_simlib()
     tail      = (struct master **) calloc(listsize,   sizeof(struct master *));
     _transfer  = (float *)          calloc(maxatr + 1, sizeof(float));
     transfer  = (float **)          calloc(num_stations, sizeof(float*));
-    
-    int i;
+    next_event_type = (int *)       calloc(num_stations + 1, sizeof(int));
+    sim_time = (float *)          calloc(num_stations + 1, sizeof(float));
+
     for (i = 0; i < num_stations; ++i) {
-        transfer[i] = (float *) calloc(maxatr + 1, sizeof(float));
+      sim_time[i] = 0.0;
+      transfer[i] = (float *) calloc(maxatr + 1, sizeof(float));
     }
 
     /* Initialize list attributes. */
@@ -99,11 +100,11 @@ void init_simlib()
     /* Initialize statistical routines. */
 
     sampst(0.0, 0);
-    timest(0.0, 0);
+    timest(0.0, 0, 1);
 }
 
 
-void list_file(int id_transfer, int option, int list)
+void list_file(int id_transfer, int option, int list, float _sim_time)
 {
 
 /* Place transfr into list "list".
@@ -120,7 +121,7 @@ void list_file(int id_transfer, int option, int list)
     /* If the list value is improper, stop the simulation. */
 
     if(!((list >= 0) && (list <= MAX_LIST))) {
-        printf("\nInvalid list %d for list_file at time %f\n", list, sim_time);
+        printf("\nInvalid list %d for list_file at time %f\n", list, _sim_time);
         exit(1);
     }
 
@@ -133,7 +134,7 @@ void list_file(int id_transfer, int option, int list)
     if(!((option >= 1) && (option <= DECREASING))) {
         printf(
             "\n%d is an invalid option for list_file on list %d at time %f\n",
-            option, list, sim_time);
+            option, list, _sim_time);
         exit(1);
     }
 
@@ -157,7 +158,7 @@ void list_file(int id_transfer, int option, int list)
             if(!((item >= 1) && (item <= maxatr))) {
                 printf(
                     "%d is an improper value for rank of list %d at time %f\n",
-                    item, list, sim_time) ;
+                    item, list, _sim_time);
                 exit(1);
             }
 
@@ -241,7 +242,7 @@ void list_file(int id_transfer, int option, int list)
 
     /* Update the area under the number-in-list curve. */
 
-    timest((float)list_size[list], TIM_VAR + list);
+    timest((float)list_size[list], TIM_VAR + list, id_transfer);
 }
 
 
@@ -259,14 +260,14 @@ void list_remove(int id_transfer, int option, int list)
 
     if(!((list >= 0) && (list <= MAX_LIST))) {
         printf("\nInvalid list %d for list_remove at time %f\n",
-               list, sim_time);
+               list, sim_time[id_transfer]);
         exit(1);
     }
 
     /* If the list is empty, stop the simulation. */
 
     if(list_size[list] <= 0) {
-        printf("\nUnderflow of list %d at time %f\n", list, sim_time);
+        printf("\nUnderflow of list %d at time %f\n", list, sim_time[id_transfer]);
         exit(1);
     }
 
@@ -279,7 +280,7 @@ void list_remove(int id_transfer, int option, int list)
     if(!(option == FIRST || option == LAST)) {
         printf(
             "\n%d is an invalid option for list_remove on list %d at time %f\n",
-            option, list, sim_time);
+            option, list, sim_time[id_transfer]);
         exit(1);
     }
 
@@ -327,7 +328,7 @@ void list_remove(int id_transfer, int option, int list)
 
     /* Update the area under the number-in-list curve. */
 
-    timest((float)list_size[list], TIM_VAR + list);
+    timest((float)list_size[list], TIM_VAR + list, id_transfer);
 }
 
 
@@ -344,17 +345,17 @@ void timing(int id_transfer, int id_station)
 
     /* Check for a time reversal. */
 
-    if(transfer[id_transfer][EVENT_TIME] < sim_time) {
+    if(transfer[id_transfer][EVENT_TIME] < sim_time[id_station]) {
         printf(
             "\nAttempt to schedule event type %f for time %f at time %f\n",
-            transfer[id_transfer][EVENT_TYPE], transfer[id_transfer][EVENT_TIME], sim_time);
+            transfer[id_transfer][EVENT_TYPE], transfer[id_transfer][EVENT_TIME], sim_time[id_station]);
         exit(1);
     }
 
     /* Advance the simulation clock and set the next event type. */
 
-    sim_time        = transfer[id_transfer][EVENT_TIME];
-    next_event_type = transfer[id_transfer][EVENT_TYPE];
+    sim_time[id_station]         = transfer[id_transfer][EVENT_TIME];
+    next_event_type[id_station]  = transfer[id_transfer][EVENT_TYPE];
 }
 
 
@@ -365,10 +366,10 @@ void event_schedule(int id_transfer, int id_station, float time_of_event, int ty
    beyond the first two (reserved for the event time and the event type) are
    being used in the event list, it is the user's responsibility to place their
    values into the transfer array before invoking event_schedule. */
-
+   // printf("station: %d\n, time: %f, typeevent: %d", id_transfer, time_of_event, type_of_event);
     transfer[id_transfer][EVENT_TIME] = time_of_event;
     transfer[id_transfer][EVENT_TYPE] = type_of_event;
-    list_file(id_transfer, INCREASING, LIST_EVENT + id_station);
+    list_file(id_transfer, INCREASING, LIST_EVENT + id_station, sim_time[id_station]);
 }
 
 
@@ -442,7 +443,7 @@ int event_cancel(int id_transfer, int id_station, int event_type)
 
     /* Update the area under the number-in-event-list curve. */
 
-    timest((float)list_size[LIST_EVENT + id_station], TIM_VAR + LIST_EVENT + id_station);
+    timest((float)list_size[LIST_EVENT + id_station], TIM_VAR + LIST_EVENT + id_station, id_station);
     return 1;
 }
 
@@ -468,7 +469,7 @@ float sampst(float value, int variable)
 
     if(!(variable >= -MAX_SVAR) && (variable <= MAX_SVAR)) {
         printf("\n%d is an improper value for a sampst variable at time %f\n",
-            variable, sim_time);
+            variable, sim_time[1]);
         exit(1);
     }
 
@@ -505,7 +506,7 @@ float sampst(float value, int variable)
 }
 
 
-float timest(float value, int variable)
+float timest(float value, int variable, int id_station)
 {
 
 /* Initialize, update, or report statistics on continuous-time processes:
@@ -528,29 +529,29 @@ float timest(float value, int variable)
 
     if(!(variable >= -MAX_TVAR) && (variable <= MAX_TVAR)) {
         printf("\n%d is an improper value for a timest variable at time %f\n",
-            variable, sim_time);
+            variable, sim_time[id_station]);
         exit(1);
     }
 
     /* Execute the desired option. */
 
     if(variable > 0) { /* Update. */
-        area[variable] += (sim_time - tlvc[variable]) * preval[variable];
+        area[variable] += (sim_time[id_station] - tlvc[variable]) * preval[variable];
         if(value > max[variable]) max[variable] = value;
         if(value < min[variable]) min[variable] = value;
         preval[variable] = value;
-        tlvc[variable]   = sim_time;
+        tlvc[variable]   = sim_time[id_station];
         return 0.0;
     }
 
     if(variable < 0) { /* Report summary statistics in transfer. */
         ivar         = -variable;
-        area[ivar]   += (sim_time - tlvc[ivar]) * preval[ivar];
-        tlvc[ivar]   = sim_time;
-        _transfer[1]  = area[ivar] / (sim_time - treset);
+        area[ivar]   += (sim_time[id_station] - tlvc[ivar]) * preval[ivar];
+        tlvc[ivar]   = sim_time[id_station];
+        _transfer[1]  = area[ivar] / (sim_time[id_station] - treset);
         _transfer[2]  = max[ivar];
         _transfer[3]  = min[ivar];
-        return _transfer[1];
+        return _transfer[id_station];
     }
 
     /* Initialize the accumulators. */
@@ -560,9 +561,9 @@ float timest(float value, int variable)
         max[ivar]    = -MYINFINITY;
         min[ivar]    =  MYINFINITY;
         preval[ivar] = 0.0;
-        tlvc[ivar]   = sim_time;
+        tlvc[ivar]   = sim_time[id_station];
     }
-    treset = sim_time;
+    treset = sim_time[id_station];
 }
 
 
@@ -575,7 +576,7 @@ float filest(int list)
        [3] = minimum length list has attained
    This uses timest variable TIM_VAR + list. */
 
-    return timest(0.0, -(TIM_VAR + list));
+    return timest(0.0, -(TIM_VAR + list), 1);
 }
 
 
@@ -622,7 +623,7 @@ void out_timest(FILE *unit, int lowvar, int highvar)
     fprintf(unit, "\n________________________________________________________");
     for(ivar = lowvar; ivar <= highvar; ++ivar) {
         fprintf(unit, "\n\n%5d", ivar);
-        timest(0.00, -ivar);
+        timest(0.00, -ivar, 1);
         for(iatrr = 1; iatrr <= 3; ++iatrr) pprint_out(unit, iatrr);
     }
     fprintf(unit, "\n________________________________________________________");

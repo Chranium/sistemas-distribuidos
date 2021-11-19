@@ -9,8 +9,8 @@
 
 /* Declare simlib global variables. */
 
-extern int    *list_rank, *list_size, next_event_type, maxatr, maxlist;
-extern float  **transfer, *_transfer, sim_time, prob_distrib[26];
+extern int    *list_rank, *list_size, *next_event_type, maxatr, maxlist;
+extern float  **transfer, *_transfer, *sim_time, prob_distrib[26];
 extern struct master {
     float  *value;
     struct master *pr;
@@ -21,7 +21,7 @@ extern struct master {
 
 extern void  init_simlib(void);
 // extern void  list_file(int option, int list);
-extern void list_file(int id_transfer, int option, int list);
+extern void list_file(int id_transfer, int option, int list, float _sim_time);
 // extern void  list_remove(int option, int list);
 extern void  list_remove(int id_transfer, int option, int list);
 // extern void  timing(void);
@@ -34,7 +34,7 @@ extern void event_schedule(int id_transfer, int id_station, float time_of_event,
 // extern int event_cancel(int id_station, int event_type);
 extern int event_cancel(int id_transfer, int id_station, int event_type);
 extern float sampst(float value, int varibl);
-extern float timest(float value, int varibl);
+extern float timest(float value, int varibl, int id_station);
 extern float filest(int list);
 extern void  out_sampst(FILE *unit, int lowvar, int highvar);
 extern void  out_timest(FILE *unit, int lowvar, int highvar);
