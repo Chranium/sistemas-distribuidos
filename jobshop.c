@@ -122,7 +122,7 @@ int main(int argc, char **argv)  /* Main function. */
     maxatr = 4;  /* NEVER SET maxatr TO BE SMALLER THAN 4. */
 
     /* TODO: agregue comentario bonito en ingles */
-    int threads = 1;
+    int threads = 5;
 
    //  int id_station, id_transfer;
    //  for (id_station = 1, id_transfer = 1; id_station <= 1; ++id_station, ++id_transfer)
@@ -130,16 +130,19 @@ int main(int argc, char **argv)  /* Main function. */
     {
 
       int id_station = omp_get_thread_num() + 1;
-      int id_transfer = omp_get_thread_num() + 1;
+      int id_transfer = id_station;
+      printf("id_thread: %d \n", id_station);
         /* Schedule the arrival of the first job. */
 
+      if(id_station == 1) {
         event_schedule(id_transfer, id_station, expon(mean_interarrival, STREAM_INTERARRIVAL),
                     EVENT_ARRIVAL);
+      }
         /* Schedule the end of the simulation.  (This is needed for consistency of
         units.) */
 
         event_schedule(id_transfer, id_station, 8 * length_simulation, EVENT_END_SIMULATION);
-
+      
             /* Run the simulation until it terminates after an end-simulation event
        (type EVENT_END_SIMULATION) occurs. */
    
@@ -286,6 +289,7 @@ void depart(int id_station)  /* Event function for departure of a job from a par
            attributes beyond the first two for the event record before invoking
            event_schedule. */
 
+         printf("id_station: %d, station: %d \n", id_station, station);
         transfer[id_station][3] = job_type_queue;
         transfer[id_station][4] = task_queue;
         //   station  = route[job_type_queue][task_queue];
@@ -294,7 +298,7 @@ void depart(int id_station)  /* Event function for departure of a job from a par
         //                         STREAM_SERVICE),
         //                EVENT_DEPARTURE);
 
-        event_schedule(id_station, id_station, sim_time[id_station]
+        event_schedule(id_station, station, sim_time[station]
                        + erlang(2, mean_service[job_type_queue][task_queue],
                                 STREAM_SERVICE),
                        EVENT_DEPARTURE);
