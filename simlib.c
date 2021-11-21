@@ -120,7 +120,7 @@ void list_file(int id_transfer, int option, int list, float _sim_time)
 
     /* If the list value is improper, stop the simulation. */
 
-    if(!((list >= 0) && (list <= MAX_LIST))) {
+    if(!((list >= 1) && (list <= MAX_LIST))) {
         printf("\nInvalid list %d for list_file at time %f\n", list, _sim_time);
         exit(1);
     }
@@ -156,7 +156,7 @@ void list_file(int id_transfer, int option, int list, float _sim_time)
         if ((option == INCREASING) || (option == DECREASING)) {
             item = list_rank[list];
             if(!((item >= 1) && (item <= maxatr))) {
-
+                
                 printf(
                     "%d is an improper value for rank of list %d at time %f en el hilo %d con la opcion %d \n",
                     item, list, _sim_time, id_transfer, option);
@@ -169,6 +169,8 @@ void list_file(int id_transfer, int option, int list, float _sim_time)
             /* Search for the correct location. */
 
             if (option == INCREASING) {
+                //printf("error---> item: %d \n",item);
+                int y = (*row).value[item];
                 postest = (transfer[id_transfer][item] >= (*row).value[item]);
                 while (postest) {
                     behind  = row;
@@ -480,6 +482,7 @@ float sampst(float value, int variable)
 
     if(variable > 0) { /* Update. */
         sum[variable] += value;
+        //printf("suma: %f, variable: %d, value: %f \n",sum[variable],variable,value);
         if(value > max[variable]) max[variable] = value;
         if(value < min[variable]) min[variable] = value;
         num_observations[variable]++;

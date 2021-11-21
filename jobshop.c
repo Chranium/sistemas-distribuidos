@@ -35,12 +35,13 @@ void  depart(int id_station);
 void  report(void);
 
 
-int main(int argc, char **argv)  /* Main function. */
+//int main(int argc, char **argv)  /* Main function. */
+int main()  /* Main function. */
 {
 
    char *fileInput =  "jobshop.input.txt";
    char *fileOutput = "jobshop.output.txt";
-
+/*
    if (argc == 2) {
       fileOutput = argv[1];
    }
@@ -49,7 +50,7 @@ int main(int argc, char **argv)  /* Main function. */
       fileOutput = argv[1];
       fileInput = argv[2];
    }
-
+*/
    infile  = fopen(fileInput,  "r");
    outfile = fopen(fileOutput, "w");
 
@@ -141,6 +142,7 @@ int main(int argc, char **argv)  /* Main function. */
         /* Schedule the end of the simulation.  (This is needed for consistency of
         units.) */
         printf("event_schedule ok1: %d \n",id_station);
+        #pragma omp critical
         event_schedule(id_transfer, id_station, 8 * length_simulation, EVENT_END_SIMULATION);
         printf("event_schedule ok2: %d \n",id_station);
       
@@ -150,16 +152,17 @@ int main(int argc, char **argv)  /* Main function. */
         do {
 
             /* Determine the next event. */
-
             timing(id_transfer, id_station);
 
             /* Invoke the appropriate event function. */
 
             switch (next_event_type[id_station]) {
                 case EVENT_ARRIVAL:
+                    #pragma omp critical
                     arrive(1, id_station);
                     break;
                 case EVENT_DEPARTURE:
+                    #pragma omp critical
                     depart(id_station);
                     break;
                 case EVENT_END_SIMULATION:
