@@ -2,7 +2,7 @@
 
 /* Define limits. */
 
-#define MAX_LIST    29      /* Max number of lists. */
+#define MAX_LIST    30      /* Max number of lists. */
 #define MAX_ATTR    10      /* Max number of attributes. */
 #define MAX_SVAR    25      /* Max number of sampst variables. */
 #define TIM_VAR     25      /* Max number of timest variables. */
@@ -11,7 +11,7 @@
 
 /* Define array sizes. */
 
-#define LIST_SIZE   30      /* MAX_LIST + 1. */
+#define LIST_SIZE   31      /* MAX_LIST + 1. */
 #define ATTR_SIZE   11      /* MAX_ATTR + 1. */
 #define SVAR_SIZE   26      /* MAX_SVAR + 1. */
 #define TVAR_SIZE   51      /* MAX_TVAR + 1. */

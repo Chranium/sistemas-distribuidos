@@ -122,13 +122,13 @@ int main(int argc, char **argv)  /* Main function. */
     maxatr = 4;  /* NEVER SET maxatr TO BE SMALLER THAN 4. */
 
     /* TODO: agregue comentario bonito en ingles */
-    int threads = 3;
+    int threads = 1;
 
    //  int id_station, id_transfer;
    //  for (id_station = 1, id_transfer = 1; id_station <= 1; ++id_station, ++id_transfer)
     #pragma omp parallel num_threads(threads)
     {
-       
+
       int id_station = omp_get_thread_num() + 1;
       int id_transfer = omp_get_thread_num() + 1;
         /* Schedule the arrival of the first job. */
