@@ -140,8 +140,9 @@ int main(int argc, char **argv)  /* Main function. */
       }
         /* Schedule the end of the simulation.  (This is needed for consistency of
         units.) */
-
+        printf("event_schedule ok1: %d \n",id_station);
         event_schedule(id_transfer, id_station, 8 * length_simulation, EVENT_END_SIMULATION);
+        printf("event_schedule ok2: %d \n",id_station);
       
             /* Run the simulation until it terminates after an end-simulation event
        (type EVENT_END_SIMULATION) occurs. */

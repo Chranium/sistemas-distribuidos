@@ -9,7 +9,7 @@
 
 /* Declare simlib global variables. */
 
-int    i, *list_rank, *list_size, *next_event_type, maxatr = 0, maxlist = 0;
+int    *list_rank, *list_size, *next_event_type, maxatr = 0, maxlist = 0;
 float  *_transfer, **transfer, *sim_time, prob_distrib[26];
 struct master {
     float  *value;
@@ -54,7 +54,7 @@ void init_simlib()
 /* Initialize simlib.c.  List LIST_EVENT is reserved for event list, ordered by
    event time.  init_simlib must be called from main by user. */
 
-    int list, listsize;
+    int list, listsize, i;
 
     if (maxlist < 1) maxlist = MAX_LIST;
     listsize = maxlist + 1;
@@ -65,18 +65,18 @@ void init_simlib()
 
     /* Allocate space for the lists. */
 
-    int num_stations = 5;  // TODO: arreglar
+    int number_stations = 5;  // TODO: arreglar
 
     list_rank = (int *)            calloc(listsize,   sizeof(int));
     list_size = (int *)            calloc(listsize,   sizeof(int));
     head      = (struct master **) calloc(listsize,   sizeof(struct master *));
     tail      = (struct master **) calloc(listsize,   sizeof(struct master *));
     _transfer  = (float *)          calloc(maxatr + 1, sizeof(float));
-    transfer  = (float **)          calloc(num_stations, sizeof(float*));
-    next_event_type = (int *)       calloc(num_stations + 1, sizeof(int));
-    sim_time = (float *)          calloc(num_stations + 1, sizeof(float));
+    transfer  = (float **)          calloc(number_stations + 1, sizeof(float*));
+    next_event_type = (int *)       calloc(number_stations + 1, sizeof(int));
+    sim_time = (float *)          calloc(number_stations + 1, sizeof(float));
 
-    for (i = 0; i < num_stations; ++i) {
+    for (i = 0; i <= number_stations; ++i) {
       sim_time[i] = 0.0;
       transfer[i] = (float *) calloc(maxatr + 1, sizeof(float));
     }
@@ -93,7 +93,7 @@ void init_simlib()
     /* Set event list to be ordered by event time. */
 
     // list_rank[LIST_EVENT] = EVENT_TIME;
-    for (list = LIST_EVENT; list < MAX_LIST; ++list ) {
+    for (list = LIST_EVENT; list <= MAX_LIST; ++list ) {
         list_rank[list] = EVENT_TIME;
     }
 
@@ -156,9 +156,10 @@ void list_file(int id_transfer, int option, int list, float _sim_time)
         if ((option == INCREASING) || (option == DECREASING)) {
             item = list_rank[list];
             if(!((item >= 1) && (item <= maxatr))) {
+
                 printf(
-                    "%d is an improper value for rank of list %d at time %f\n",
-                    item, list, _sim_time);
+                    "%d is an improper value for rank of list %d at time %f en el hilo %d con la opcion %d \n",
+                    item, list, _sim_time, id_transfer, option);
                 exit(1);
             }
 
@@ -353,9 +354,11 @@ void timing(int id_transfer, int id_station)
     }
 
     /* Advance the simulation clock and set the next event type. */
-
+    //printf("next_event_type-- id transter= %d, event type: %d \n",id_transfer,EVENT_TYPE);
     sim_time[id_station]         = transfer[id_transfer][EVENT_TIME];
+    //printf("okay1: %d \n",id_transfer);
     next_event_type[id_station]  = transfer[id_transfer][EVENT_TYPE];
+    //printf("okay2: %d \n",id_transfer);
 }
 
 
