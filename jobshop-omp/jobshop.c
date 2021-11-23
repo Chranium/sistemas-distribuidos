@@ -141,10 +141,9 @@ int main()  /* Main function. */
       }
         /* Schedule the end of the simulation.  (This is needed for consistency of
         units.) */
-        printf("event_schedule ok1: %d \n",id_station);
+
         #pragma omp critical
         event_schedule(id_transfer, id_station, 8 * length_simulation, EVENT_END_SIMULATION);
-        printf("event_schedule ok2: %d \n",id_station);
       
             /* Run the simulation until it terminates after an end-simulation event
        (type EVENT_END_SIMULATION) occurs. */
@@ -202,7 +201,13 @@ void arrive(int new_job, int id_station)  /* Function to serve as both an arriva
         task[id_station]     = 1;
         station = route[job_type[id_station]][task[id_station]];
         // TODO: problemas con la variable station al reemplazar por id_station
-        event_schedule(id_station, id_station, sim_time[id_station] + expon(mean_interarrival, STREAM_INTERARRIVAL),
+      float x = sim_time[id_station] + expon(mean_interarrival, STREAM_INTERARRIVAL);
+
+      // if(x <= 2.0) {
+      //    printf("idstation: %d, time: %f \n", id_station, x);
+      // }
+
+        event_schedule(id_station, id_station, x,
                        EVENT_ARRIVAL);
         
     }
@@ -277,9 +282,14 @@ void depart(int id_station)  /* Event function for departure of a job from a par
 
         /* The queue is nonempty, so start service on first job in queue. */
 
-        list_remove(id_station, FIRST, station);
+        list_remove(station, FIRST, station);
 
         /* Tally this delay for this station. */
+
+        float x = sim_time[id_station] - transfer[id_station][1];
+        if (x < 0) {
+           printf("idstation: %d, sim_time: %f, transfer: %f, time: %f\n", id_station, sim_time[id_station], transfer[id_station][1], x);
+        }
 
         sampst(sim_time[id_station] - transfer[id_station][1], station);
 
@@ -293,7 +303,7 @@ void depart(int id_station)  /* Event function for departure of a job from a par
            attributes beyond the first two for the event record before invoking
            event_schedule. */
 
-         printf("id_station: %d, station: %d \n", id_station, station);
+         // printf("id_station: %d, station: %d \n", id_station, station);
         transfer[id_station][3] = job_type_queue;
         transfer[id_station][4] = task_queue;
         //   station  = route[job_type_queue][task_queue];
