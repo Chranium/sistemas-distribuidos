@@ -28,6 +28,11 @@ float mean_interarrival, length_simulation,
       mean_service[MAX_NUM_JOB_TYPES +1][ MAX_NUM_STATIONS + 1];
 FILE  *infile, *outfile;
 
+int end_simulation = 0;
+int evt_end_simulation[6] = {0, 0, 0, 0, 0, 0};
+int flag[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int count[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
 /* Declare non-simlib functions. */
 
 void  arrive(int new_job, int id_station);
@@ -132,7 +137,7 @@ int main()  /* Main function. */
 
       int id_station = omp_get_thread_num() + 1;
       int id_transfer = id_station;
-      printf("id_thread: %d \n", id_station);
+      // printf("id_thread: %d \n", id_station);
         /* Schedule the arrival of the first job. */
 
       if(id_station == 1) {
@@ -159,12 +164,29 @@ int main()  /* Main function. */
                 case EVENT_ARRIVAL:
                     #pragma omp critical
                     arrive(1, id_station);
+                    if(id_station == 5) printf("EVENT_ARRIVAL: %d \n", id_station);
                     break;
                 case EVENT_DEPARTURE:
                     #pragma omp critical
                     depart(id_station);
+                    if(id_station == 5) printf("EVENT_DEPARTURE: %d \n", id_station);
                     break;
                 case EVENT_END_SIMULATION:
+                  //  if(id_station == 5) printf("EVENT_END_SIMULATION: %d \n", id_station);
+                  evt_end_simulation[id_station] = 1;
+                  int x;
+                  int sum = 0;
+
+                  for (x = 1; x < 6; x++) {
+                     sum += evt_end_simulation[x];
+                  }
+
+                  if(sum != 6) {
+                   evt_end_simulation[id_station] = 0;
+                   #pragma omp critical
+                   event_schedule(id_transfer, id_station, 8 * length_simulation, EVENT_END_SIMULATION);
+                   next_event_type[id_station] = 0;
+                  }
                     // report();
                     break;
             }
@@ -227,10 +249,16 @@ void arrive(int new_job, int id_station)  /* Function to serve as both an arriva
              2. Job type.
              3. Current task number. */
 
-        transfer[id_station][1] = sim_time[id_station];
+      int current_sim_time = sim_time[station];
+        transfer[id_station][1] = current_sim_time;
         transfer[id_station][2] = job_type[id_station];
         transfer[id_station][3] = task[id_station];
-        list_file(id_station, LAST, station, sim_time[id_station]);
+        if(count[id_station] < 10) {
+           count[id_station]++;
+         //   printf("No. %d: id_station: %d, station: %d \n", count[id_station], id_station, station);
+        }
+
+        list_file(id_station, LAST, station, current_sim_time);
     }
 
     else {
@@ -248,7 +276,8 @@ void arrive(int new_job, int id_station)  /* Function to serve as both an arriva
 
         transfer[id_station][3] = job_type[id_station];
         transfer[id_station][4] = task[id_station];
-        event_schedule(id_station, id_station, sim_time[id_station]
+
+        event_schedule(id_station, station, sim_time[station]
                        + erlang(2, mean_service[job_type[id_station]][task[id_station]],
                                 STREAM_SERVICE),
                        EVENT_DEPARTURE);
@@ -267,6 +296,10 @@ void depart(int id_station)  /* Event function for departure of a job from a par
     task[id_station]     = transfer[id_station][4];
     station  = route[job_type[id_station]][task[id_station]];
 
+   //  if (id_station != 1) {
+   //    printf("idstation: %d, sim_time: %f, transfer: %f\n", id_station, sim_time[id_station], transfer[id_station][1]);
+   // }
+
     /* Check to see whether the queue for this station is empty. */
 
     if (list_size[station] == 0) { // as station.lenght == 0
@@ -282,14 +315,13 @@ void depart(int id_station)  /* Event function for departure of a job from a par
 
         /* The queue is nonempty, so start service on first job in queue. */
 
-        list_remove(station, FIRST, station);
+        list_remove(id_station, FIRST, station);
 
         /* Tally this delay for this station. */
 
         float x = sim_time[id_station] - transfer[id_station][1];
-        if (x < 0) {
-           printf("idstation: %d, sim_time: %f, transfer: %f, time: %f\n", id_station, sim_time[id_station], transfer[id_station][1], x);
-        }
+        
+      //   printf("id_station: %d\n", id_station);
 
         sampst(sim_time[id_station] - transfer[id_station][1], station);
 
