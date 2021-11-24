@@ -162,17 +162,18 @@ int main()  /* Main function. */
 
             switch (next_event_type[id_station]) {
                 case EVENT_ARRIVAL:
+                    evt_end_simulation[id_station] = 0;
                     #pragma omp critical
                     arrive(1, id_station);
                     if(id_station == 5) printf("EVENT_ARRIVAL: %d \n", id_station);
                     break;
                 case EVENT_DEPARTURE:
+                    evt_end_simulation[id_station] = 0;
                     #pragma omp critical
                     depart(id_station);
                     if(id_station == 5) printf("EVENT_DEPARTURE: %d \n", id_station);
                     break;
                 case EVENT_END_SIMULATION:
-                  //  if(id_station == 5) printf("EVENT_END_SIMULATION: %d \n", id_station);
                   evt_end_simulation[id_station] = 1;
                   int x;
                   int sum = 0;
@@ -181,8 +182,7 @@ int main()  /* Main function. */
                      sum += evt_end_simulation[x];
                   }
 
-                  if(sum != 6) {
-                   evt_end_simulation[id_station] = 0;
+                  if(sum != 5) {
                    #pragma omp critical
                    event_schedule(id_transfer, id_station, 8 * length_simulation, EVENT_END_SIMULATION);
                    next_event_type[id_station] = 0;
@@ -296,9 +296,9 @@ void depart(int id_station)  /* Event function for departure of a job from a par
     task[id_station]     = transfer[id_station][4];
     station  = route[job_type[id_station]][task[id_station]];
 
-   //  if (id_station != 1) {
-   //    printf("idstation: %d, sim_time: %f, transfer: %f\n", id_station, sim_time[id_station], transfer[id_station][1]);
-   // }
+    if (id_station != 1) {
+       printf("idstation: %d, sim_time: %f, transfer: %f\n", id_station, sim_time[id_station], transfer[id_station][1]);
+   }
 
     /* Check to see whether the queue for this station is empty. */
 
