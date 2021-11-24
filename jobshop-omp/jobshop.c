@@ -30,6 +30,7 @@ FILE  *infile, *outfile;
 
 int end_simulation = 0;
 int evt_end_simulation[6] = {0, 0, 0, 0, 0, 0};
+
 int flag[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int count[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -135,14 +136,16 @@ int main()  /* Main function. */
     #pragma omp parallel num_threads(threads)
     {
 
-      int id_station = omp_get_thread_num() + 1;
+      int k, id_station = omp_get_thread_num() + 1;
       int id_transfer = id_station;
       // printf("id_thread: %d \n", id_station);
         /* Schedule the arrival of the first job. */
 
-      if(id_station == 1) {
-        event_schedule(id_transfer, id_station, expon(mean_interarrival, STREAM_INTERARRIVAL),
-                    EVENT_ARRIVAL);
+      for (k = 1; k <= num_job_types; ++k) {
+         if(id_station == route[k][1]) {
+            #pragma omp critical
+            event_schedule(id_transfer, id_station, expon(mean_interarrival, STREAM_INTERARRIVAL), EVENT_ARRIVAL);
+         }
       }
         /* Schedule the end of the simulation.  (This is needed for consistency of
         units.) */
@@ -162,18 +165,19 @@ int main()  /* Main function. */
 
             switch (next_event_type[id_station]) {
                 case EVENT_ARRIVAL:
-                    evt_end_simulation[id_station] = 0;
-                    #pragma omp critical
-                    arrive(1, id_station);
-                    if(id_station == 5) printf("EVENT_ARRIVAL: %d \n", id_station);
-                    break;
+                  if(id_station == 5) printf("EVENT_ARRIVAL: %d \n", id_station);
+                  evt_end_simulation[id_station] = 0;
+                  #pragma omp critical
+                  arrive(1, id_station);
+                  break;
                 case EVENT_DEPARTURE:
-                    evt_end_simulation[id_station] = 0;
-                    #pragma omp critical
-                    depart(id_station);
-                    if(id_station == 5) printf("EVENT_DEPARTURE: %d \n", id_station);
-                    break;
+                  if(id_station == 5) printf("EVENT_DEPARTURE: %d \n", id_station);
+                  evt_end_simulation[id_station] = 0; 
+                  #pragma omp critical
+                  depart(id_station);
+                  break;
                 case EVENT_END_SIMULATION:
+                  if(id_station == 5) printf("EVENT_END_SIMULATION: %d \n", id_station);
                   evt_end_simulation[id_station] = 1;
                   int x;
                   int sum = 0;
@@ -187,8 +191,8 @@ int main()  /* Main function. */
                    event_schedule(id_transfer, id_station, 8 * length_simulation, EVENT_END_SIMULATION);
                    next_event_type[id_station] = 0;
                   }
-                    // report();
-                    break;
+                  // report();
+                  break;
             }
 
         /* If the event just executed was not the end-simulation event (type
@@ -217,21 +221,13 @@ void arrive(int new_job, int id_station)  /* Function to serve as both an arriva
        arrival and determine the job type and task number of the arriving
        job. */
 
-
     if (new_job == 1) {
-        job_type[id_station] = random_integer(prob_distrib_job_type, STREAM_JOB_TYPE);
-        task[id_station]     = 1;
-        station = route[job_type[id_station]][task[id_station]];
-        // TODO: problemas con la variable station al reemplazar por id_station
+      job_type[id_station] = random_integer(prob_distrib_job_type, STREAM_JOB_TYPE);
+      task[id_station]     = 1;
+      station = route[job_type[id_station]][task[id_station]];
+      // TODO: problemas con la variable station al reemplazar por id_station
       float x = sim_time[id_station] + expon(mean_interarrival, STREAM_INTERARRIVAL);
-
-      // if(x <= 2.0) {
-      //    printf("idstation: %d, time: %f \n", id_station, x);
-      // }
-
-        event_schedule(id_station, id_station, x,
-                       EVENT_ARRIVAL);
-        
+      event_schedule(id_station, id_station, x, EVENT_ARRIVAL);
     }
 
     /* Determine the station from the route matrix. */
@@ -296,9 +292,9 @@ void depart(int id_station)  /* Event function for departure of a job from a par
     task[id_station]     = transfer[id_station][4];
     station  = route[job_type[id_station]][task[id_station]];
 
-    if (id_station != 1) {
-       printf("idstation: %d, sim_time: %f, transfer: %f\n", id_station, sim_time[id_station], transfer[id_station][1]);
-   }
+   // if (id_station != 1) {
+   //     printf("idstation: %d, sim_time: %f, transfer: %f\n", id_station, sim_time[id_station], transfer[id_station][1]);
+   // }
 
     /* Check to see whether the queue for this station is empty. */
 
@@ -354,8 +350,9 @@ void depart(int id_station)  /* Event function for departure of a job from a par
        the job to the next station on its route. */
 
     if (task[id_station] < num_tasks[job_type[id_station]]) {
-        ++task[id_station];
-        arrive(2, id_station);
+         ++task[id_station];
+         // station  = route[job_type[id_station]][task[id_station]];
+         arrive(2, id_station);
     }
 }
 
