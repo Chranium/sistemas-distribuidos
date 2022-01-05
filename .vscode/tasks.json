@@ -1,35 +1,20 @@
 {
-   "tasks": [
+	"version": "2.0.0",
+	"tasks": [
       {
          "type": "cppbuild",
-         "label": "C/C++: gcc compilar archivo activo",
-         "command": "/usr/bin/gcc",
+         "label": "C/C++: gcc.exe compilar archivo activo",
+         "command": "C:\\MinGW\\bin\\gcc.exe",
          "args": [
+            //gcc jobshop.c simlib.c -o jobshop -lm -fopenmp
             "-fdiagnostics-color=always",
-            "-g",
+            "-g3",
             "${file}",
+            "simlib.c",
             "-o",
-            "${fileDirname}/${fileBasenameNoExtension}"
-         ],
-         "options": {
-            "cwd": "${fileDirname}"
-         },
-         "problemMatcher": [
-            "$gcc"
-         ],
-         "group": "build",
-         "detail": "Tarea generada por el depurador."
-      },
-      {
-         "type": "cppbuild",
-         "label": "C/C++: gcc compilar archivo activo ver(1)",
-         "command": "/usr/bin/gcc",
-         "args": [
-            "-fdiagnostics-color=always",
-            "-g",
-            "${file}",
-            "-o",
-            "${fileDirname}/${fileBasenameNoExtension}"
+            "${fileDirname}\\${fileBasenameNoExtension}.exe",
+            "-lm",
+            "-fopenmp"
          ],
          "options": {
             "cwd": "${fileDirname}"
@@ -41,8 +26,19 @@
             "kind": "build",
             "isDefault": true
          },
-         "detail": "Tarea generada por el depurador."
+         "detail": "compilador: C:\\MinGW\\bin\\gcc.exe"
+      },
+      {
+         "type": "shell",
+         "label": "Run this C program",
+         "command": "C:\\MinGW\\bin\\gcc.exe -g3 \"${file}\" simlib.c -o \"${fileDirname}\\${fileBasenameNoExtension}.exe\" -lm -fopenmp && \"${fileDirname}\\${fileBasenameNoExtension}.exe\"",
+         "options": {
+            "cwd": "${fileDirname}"
+         },
+         "problemMatcher": [
+            "$gcc"
+         ],
+         "detail": "compilador: C:\\MinGW\\bin\\gcc.exe"
       }
-   ],
-   "version": "2.0.0"
+   ]
 }
