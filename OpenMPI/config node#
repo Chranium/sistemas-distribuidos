@@ -7,9 +7,10 @@ sudo su
 sudo apt-get install nfs-common
 sudo apt-get install openmpi-bin openmpi-common openmpi-doc
 
-// mount -t nfs nodo0:/home/mpi/src /home/mpi/src
-cat /home/src/OpenMPI/nodo#/automount >> /etc/fstab
-cat /home/mpi/src/OpenMPI/id_rsa.pub >> /home/mpi/.ssh/authorized_keys
+mount -t nfs nodo0:/home/mpi/src /home/mpi/src
+mount -t nfs 10.1.0.4:/home/mpi/src /home/mpi/src
+
+cat /home/mpi/src/OpenMPI/nodo#/automount >> /etc/fstab
+cat /home/mpi/src/OpenMPI/nodo0/id_rsa.pub >> /home/mpi/.ssh/authorized_keys
 
 mpirun -np 2 --hostfile /home/mpi/mpi_hosts /home/mpi/src/OpenMPI/examples/mpi_bcast-test
-mpirun -np 2 --hostfile mpi_hosts ./mpi_bcast-test
