@@ -5,9 +5,9 @@ localhost slots=1
 
 # The following slave nodes are single processor machines:
 nodo1 slots=1
-#nodo2 slots=1
-#nodo3 slots=1
-#nodo4 slots=1
-#nodo5 slots=1
-#nodo6 slots=1
-#nodo7 slots=1
+# nodo2 slots=1
+# nodo3 slots=1
+# nodo4 slots=1
+# nodo5 slots=1
+# nodo6 slots=1
+# nodo7 slots=1
