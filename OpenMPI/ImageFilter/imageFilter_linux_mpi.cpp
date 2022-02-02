@@ -10,6 +10,7 @@
 //
  
 #include <stdio.h>
+#include <stdlib.h>
 // #include <mpi.h>
  
 // Video resolution
@@ -18,6 +19,7 @@
 #define F 820
  
 // Allocate a buffer to store one frame
+unsigned char *frame;
 unsigned char *frames[F];
  
 int main() {
@@ -32,7 +34,7 @@ int main() {
     // Process video frames
     while(1)
     {
-      unsigned char frame[H * W * 3];
+      frame = (unsigned char*) malloc(H * W * 3);
 
       // Read a frame from the input pipe into the buffer
       count = fread(frame, 1, H * W * 3, pipein);
