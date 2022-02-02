@@ -16,5 +16,3 @@ cat /home/mpi/src/OpenMPI/nodo0/id_rsa1.pub >> /home/mpi/.ssh/authorized_keys
 mount -t nfs 10.1.0.4:/home/mpi/src /home/mpi/src
 cat /home/mpi/src/OpenMPI/nodo#/automount2 >> /etc/fstab
 cat /home/mpi/src/OpenMPI/nodo0/id_rsa2.pub >> /home/mpi/.ssh/authorized_keys
-
-mpirun -np 8 --hostfile /home/mpi/mpi_hosts /home/mpi/src/OpenMPI/examples/mpi_bcast-test

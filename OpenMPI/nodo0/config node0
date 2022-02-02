@@ -12,3 +12,5 @@ exportfs -a
 ssh-keygen -m PEM -t rsa -b 4096
 chmod 400 ~/.ssh/id_rsa
 exit
+
+mpirun -np 8 --hostfile /home/mpi/mpi_hosts /home/mpi/src/OpenMPI/examples/mpi_bcast-test
