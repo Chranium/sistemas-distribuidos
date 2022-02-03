@@ -65,7 +65,7 @@ int main() {
    // MPI Barrier
 
    if(iam == 0) {
-      pipeout = popen("ffmpeg -y -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -s 1280x720 -r 25 -i - -f mp4 -q:v 5 -an -vcodec mpeg4 teapot_output.mp4", "wb+");
+      pipeout = popen("ffmpeg -y -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -s 1280x720 -r 25 -i - -f mp4 -q:v 5 -an -vcodec mpeg4 teapot_output.mp4", "w");
 
       for (int i = 0; i < tasks; i++) {
          sprintf(
@@ -74,7 +74,7 @@ int main() {
             i
          );
 
-         pipein = popen(commandIn, "rb+");
+         pipein = popen(commandIn, "r");
 
          while (1) {
             // Read a frame from the input pipe into the buffer
