@@ -28,39 +28,39 @@ int main() {
       iam
    );
 
-   FILE* pipein = popen("ffmpeg -i teapot_input.mp4 -f image2pipe -vcodec rawvideo -pix_fmt rgb24 -", "rb+");
-   FILE* pipeout = popen(commandOut, "wb+");
+   // FILE* pipein = popen("ffmpeg -i teapot_input.mp4 -f image2pipe -vcodec rawvideo -pix_fmt rgb24 -", "rb+");
+   // FILE* pipeout = popen(commandOut, "wb+");
 
-   // Determina el número de frames a modificar de cada proceso.
-   if (iam != tasks - 1) { endFrame = nFrames + offset; }
+   // // Determina el número de frames a modificar de cada proceso.
+   // if (iam != tasks - 1) { endFrame = nFrames + offset; }
    
-   while (1) {
-      // Read a frame from the input pipe into the buffer
-      count = fread(frame, 1, H * W * 3, pipein);
+   // while (1) {
+   //    // Read a frame from the input pipe into the buffer
+   //    count = fread(frame, 1, H * W * 3, pipein);
 
-      // If we didn't get a frame of video, we're probably at the end
-      if (count != H * W * 3) break;
+   //    // If we didn't get a frame of video, we're probably at the end
+   //    if (count != H * W * 3) break;
 
-      // Write this frame to the output pipe
-      if (a >= offset && a < endFrame) {
-         // Process this frame
-        for (int y = 0; y < H; ++y) for (int x = 0; x < W; ++x) {
-            // Invert each colour component in every pixel
-            frame[y][x][0] = 255 - frame[y][x][0]; // red
-            frame[y][x][1] = 255 - frame[y][x][1]; // green
-            frame[y][x][2] = 255 - frame[y][x][2]; // blue
-        }
+   //    // Write this frame to the output pipe
+   //    if (a >= offset && a < endFrame) {
+   //       // Process this frame
+   //      for (int y = 0; y < H; ++y) for (int x = 0; x < W; ++x) {
+   //          // Invert each colour component in every pixel
+   //          frame[y][x][0] = 255 - frame[y][x][0]; // red
+   //          frame[y][x][1] = 255 - frame[y][x][1]; // green
+   //          frame[y][x][2] = 255 - frame[y][x][2]; // blue
+   //      }
 
-         fwrite(frame, 1, H * W * 3, pipeout);
-      }
+   //       fwrite(frame, 1, H * W * 3, pipeout);
+   //    }
 
-      a++;
-   }
+   //    a++;
+   // }
 
-   fflush(pipein);
-   pclose(pipein);
-   fflush(pipeout);
-   pclose(pipeout);
+   // fflush(pipein);
+   // pclose(pipein);
+   // fflush(pipeout);
+   // pclose(pipeout);
 
    // MPI Barrier
 
