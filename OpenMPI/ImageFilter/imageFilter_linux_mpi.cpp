@@ -27,8 +27,8 @@ int main (int argc, char *argv[]) {
    offset = iam * nFrames;
 
    char commandIn[78], commandOut[130];
-   char processor_name[MPI_MAX_PROCESSOR_NAME];
-   char message[MSG_LENGTH + 2];
+   // char processor_name[MPI_MAX_PROCESSOR_NAME];
+   // char message[MSG_LENGTH + 2];
 
    sprintf(
       commandOut,
@@ -65,10 +65,8 @@ int main (int argc, char *argv[]) {
       a++;
    }
 
-   fflush(pipein);
-   pclose(pipein);
-   fflush(pipeout);
-   pclose(pipeout);
+   fflush(pipein); pclose(pipein);
+   fflush(pipeout); pclose(pipeout);
 
    // strcpy(message, "Aplicando Filtro a video");
    // MPI_Bcast(message, MSG_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -81,36 +79,34 @@ int main (int argc, char *argv[]) {
    //    printf("procesador %s", processor_name); fflush(stdout);
    // }
 
-   // if(iam == 0) {
-   //    MPI_Barrier(MPI_COMM_WORLD);
-   //    pipeout = popen("ffmpeg -y -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -s 1280x720 -r 25 -i - -f mp4 -q:v 5 -an -vcodec mpeg4 teapot_output.mp4", "w");
+   if(iam == 0) {
+      MPI_Barrier(MPI_COMM_WORLD);
+      pipeout = popen("ffmpeg -y -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -s 1280x720 -r 25 -i - -f mp4 -q:v 5 -an -vcodec mpeg4 teapot_output.mp4", "w");
 
-   //    for (int i = 0; i < tasks; i++) {
-   //       sprintf(
-   //          commandIn,
-   //          "ffmpeg -i teapot_output%i.mp4 -f image2pipe -vcodec rawvideo -pix_fmt rgb24 -",
-   //          i
-   //       );
+      for (int i = 0; i < tasks; i++) {
+         sprintf(
+            commandIn,
+            "ffmpeg -i teapot_output%i.mp4 -f image2pipe -vcodec rawvideo -pix_fmt rgb24 -",
+            i
+         );
 
-   //       pipein = popen(commandIn, "r");
+         pipein = popen(commandIn, "r");
 
-   //       while (1) {
-   //          // Read a frame from the input pipe into the buffer
-   //          count = fread(frame, 1, H * W * 3, pipein);
+         while (1) {
+            // Read a frame from the input pipe into the buffer
+            count = fread(frame, 1, H * W * 3, pipein);
 
-   //          // If we didn't get a frame of video, we're probably at the end
-   //          if (count != H * W * 3) break;
+            // If we didn't get a frame of video, we're probably at the end
+            if (count != H * W * 3) break;
 
-   //          fwrite(frame, 1, H * W * 3, pipeout);
-   //       }
+            fwrite(frame, 1, H * W * 3, pipeout);
+         }
 
-   //       fflush(pipein);
-   //       pclose(pipein);
-   //    }
+         fflush(pipein); pclose(pipein);
+      }
 
-   //    fflush(pipeout);
-   //    pclose(pipeout);
-   // }
+      fflush(pipeout); pclose(pipeout);
+   }
    
    MPI_Finalize();
    return 0;
