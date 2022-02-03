@@ -81,7 +81,7 @@ int main (int argc, char *argv[]) {
 
    MPI_Barrier(MPI_COMM_WORLD);
 
-   if(iam == 0) {
+   if(iam == 0 && tasks > 1) {
       pipeout = popen("ffmpeg -y -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -s 1280x720 -r 25 -i - -f mp4 -q:v 5 -an -vcodec mpeg4 teapot_output.mp4", "w");
 
       for (int i = 0; i < tasks; i++) {

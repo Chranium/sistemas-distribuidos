@@ -1,5 +1,6 @@
-// g++ imageFilter_linux.cpp -o imageFilter_linux
-//
+// compile: g++ imageFilter_linux.cpp -o imageFilter_linux
+// run: time ./imageFilter_linux
+
 // Video processing example using FFmpeg
 // Written by Ted Burke - last updated 12-2-2017
 //
