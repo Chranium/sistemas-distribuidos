@@ -40,6 +40,7 @@ int main() {
 
         // Write this frame to the output pipe
         fwrite(frame, 1, H * W * 3, pipeout);
+        break;
     }
 
     clock_t end = clock();
