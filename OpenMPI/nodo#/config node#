@@ -1,5 +1,7 @@
 sudo apt-get update
 sudo apt-get upgrade
+sudo apt install ffmpeg -y
+
 hostnamectl set-hostname nodo#
 mkdir src
 

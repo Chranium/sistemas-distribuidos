@@ -1,6 +1,8 @@
 sudo apt-get update
 sudo apt-get upgrade
+
 hostnamectl set-hostname nodo0
+sudo apt install ffmpeg
 sudo apt-get install openmpi-bin openssh-client openssh-server libopenmpi-dev
 sudo apt-get install nfs-kernel-server
 sudo apt-get install nfs-common
@@ -13,4 +15,5 @@ ssh-keygen -m PEM -t rsa -b 4096
 chmod 400 ~/.ssh/id_rsa
 exit
 
+mpicc mpi_bcast-test.c -o mpi_bcast-test
 mpirun -np 8 --hostfile /home/mpi/mpi_hosts /home/mpi/src/OpenMPI/examples/mpi_bcast-test
