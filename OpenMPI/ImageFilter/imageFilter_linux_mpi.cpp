@@ -64,35 +64,35 @@ int main() {
 
    // MPI Barrier
 
-   // if(iam == 0) {
-   //    pipeout = popen("ffmpeg -y -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -s 1280x720 -r 25 -i - -f mp4 -q:v 5 -an -vcodec mpeg4 teapot_output.mp4", "wb+");
+   if(iam == 0) {
+      pipeout = popen("ffmpeg -y -f rawvideo -vcodec rawvideo -pix_fmt rgb24 -s 1280x720 -r 25 -i - -f mp4 -q:v 5 -an -vcodec mpeg4 teapot_output.mp4", "wb+");
 
-   //    for (int i = 0; i < tasks; i++) {
-   //       sprintf(
-   //          commandIn,
-   //          "ffmpeg -i teapot_output%i.mp4 -f image2pipe -vcodec rawvideo -pix_fmt rgb24 -",
-   //          i
-   //       );
+      for (int i = 0; i < tasks; i++) {
+         sprintf(
+            commandIn,
+            "ffmpeg -i teapot_output%i.mp4 -f image2pipe -vcodec rawvideo -pix_fmt rgb24 -",
+            i
+         );
 
-   //       pipein = popen(commandIn, "rb+");
+         pipein = popen(commandIn, "rb+");
 
-   //       while (1) {
-   //          // Read a frame from the input pipe into the buffer
-   //          count = fread(frame, 1, H * W * 3, pipein);
+         while (1) {
+            // Read a frame from the input pipe into the buffer
+            count = fread(frame, 1, H * W * 3, pipein);
 
-   //          // If we didn't get a frame of video, we're probably at the end
-   //          if (count != H * W * 3) break;
+            // If we didn't get a frame of video, we're probably at the end
+            if (count != H * W * 3) break;
 
-   //          fwrite(frame, 1, H * W * 3, pipeout);
-   //       }
+            fwrite(frame, 1, H * W * 3, pipeout);
+         }
 
-   //       fflush(pipein);
-   //       pclose(pipein);
-   //    }
+         fflush(pipein);
+         pclose(pipein);
+      }
 
-   //    fflush(pipeout);
-   //    pclose(pipeout);
-   // }
+      fflush(pipeout);
+      pclose(pipeout);
+   }
   
    return 0;
 }
