@@ -9,14 +9,13 @@
 #define W 1280
 #define H 720
 #define F 820
-#define MSG_LENGTH 30
 
 int offset, nFrames, endFrame = F;
 unsigned char frame[H][W][3];
 
 int main (int argc, char *argv[]) {
    int iam = 0;
-   int _tasks, a = 0, count, namelen;
+   int _tasks, a = 0, count;
 
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &_tasks);
@@ -27,8 +26,6 @@ int main (int argc, char *argv[]) {
    offset = iam * nFrames;
 
    char commandIn[78], commandOut[130];
-   // char processor_name[MPI_MAX_PROCESSOR_NAME];
-   // char message[MSG_LENGTH + 2];
 
    sprintf(
       commandOut,
@@ -67,18 +64,6 @@ int main (int argc, char *argv[]) {
 
    fflush(pipein); pclose(pipein);
    fflush(pipeout); pclose(pipeout);
-
-   // strcpy(message, "Aplicando Filtro a video");
-   // MPI_Bcast(message, MSG_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
-
-   // if (iam == 0) { printf("\nMensaje enviado"); fflush(stdout); }
-   
-   // else {
-   //    MPI_Get_processor_name(processor_name, &namelen);
-   //    printf("\nnodo %d %s ", iam, message);                        
-   //    printf("procesador %s", processor_name); fflush(stdout);
-   // }
-
    MPI_Barrier(MPI_COMM_WORLD);
 
    if(iam == 0 && tasks > 1) {

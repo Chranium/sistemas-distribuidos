@@ -1,7 +1,8 @@
-// g++ imageFilter_windows.cpp -o imageFilter_windows.exe
+// compile: g++ imageFilter_windows.cpp -o imageFilter_windows.exe
+// run: ./imageFilter_windows.exe
+
 // Video processing example using FFmpeg
 // Written by Ted Burke - last updated 12-2-2017
-//
 
 #include <stdio.h>
 #include <time.h>
