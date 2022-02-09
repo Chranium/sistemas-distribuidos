@@ -1,5 +1,5 @@
-//mpicc mpi_test2.c -o mpi_test2 -lm
-//
+// mpicc mpi_test2.c -o mpi_test2 -lm
+// mpirun -np 8 --hostfile /home/mpi/mpi_hosts /home/mpi/src/OpenMPI/examples/mpi_bcast-test
 
 #include <stdio.h>
 #include <string.h>
